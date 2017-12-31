@@ -1,5 +1,5 @@
 #!/usr/local/bin/python3
-# import modules
+import socket
 import subprocess
 import sys
 import argparse
@@ -34,9 +34,7 @@ def main():
                     type=str,
                     help="a string for the input file (e.g. - hosts.csv or hosts.txt")
         # - option for specifying the input filename is required
-    parser.add_argument('-d', '--dns', required=False,
-                    type=bool,
-                    help="set -d or --dns option to perform a DNS reverse lookup on the ip address")
+    parser.add_argument('-d', '--dns', action='store_true')
     args = parser.parse_args()
     try:
         hostsFile = os.path.abspath(args.filename)
@@ -52,8 +50,20 @@ def main():
             stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
         if result == 0:
             logging.info('{} - {} is reachable'.format(hostList[x],descriptionList[x]))
+            if args.dns:
+                try:
+                    hostname = socket.gethostbyaddr(hostList[x])[0]
+                    logging.info('hostname = {}'.format(hostname))
+                except socket.herror:
+                    pass
         else:
             logging.critical('---> {} - {} is unreachable'.format(hostList[x],descriptionList[x]))
+            if args.dns:
+                try:
+                    hostname = socket.gethostbyaddr(hostList[x])[0]
+                    logging.info('hostname = {}'.format(hostname))
+                except socket.herror:
+                    pass
 
 if __name__ == '__main__':
     main()
