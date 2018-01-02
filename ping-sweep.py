@@ -6,6 +6,7 @@ import argparse
 import os
 import coloredlogs
 import logging
+import time
 coloredlogs.install()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ def main():
     '''
     for x in range(len(hostList)):
         result = subprocess.Popen(
-            ['ping', '-c', '1', "-n", "-W", "2", hostList[x]],
+            ['ping', '-c', '2', "-n", "-W", "2", hostList[x]],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
         if result == 0:
             logging.info('{} - {} is reachable'.format(hostList[x],descriptionList[x]))
@@ -55,7 +56,8 @@ def main():
                     hostname = socket.gethostbyaddr(hostList[x])[0]
                     logging.info('hostname = {}'.format(hostname))
                 except socket.herror:
-                    pass
+                    logging.critical('Reverse DNS lookup failed!')
+            time.sleep(1)
         else:
             logging.critical('---> {} - {} is unreachable'.format(hostList[x],descriptionList[x]))
             if args.dns:
@@ -63,7 +65,8 @@ def main():
                     hostname = socket.gethostbyaddr(hostList[x])[0]
                     logging.info('hostname = {}'.format(hostname))
                 except socket.herror:
-                    pass
+                    logging.critical('Reverse DNS lookup failed!')
+            time.sleep(1)
 
 if __name__ == '__main__':
     main()
