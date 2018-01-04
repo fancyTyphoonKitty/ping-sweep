@@ -7,6 +7,7 @@ import argparse
 import os
 import coloredlogs
 import logging
+import time
 coloredlogs.install()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -73,8 +74,41 @@ def main():
                         const=1,
                         help="enter number of times you'd like to perform ping sweep")
     args = parser.parse_args()
+<<<<<<< HEAD
     pingSweep(args.count,args.filename,args.dns)
     
+=======
+    try:
+        hostsFile = os.path.abspath(args.filename)
+        hostList, descriptionList = get_ips(hostsFile)
+    except AttributeError:
+        sys.exit(status=0)
+    '''
+    Loop through hosts array, ping each host, and return result
+    '''
+    for x in range(len(hostList)):
+        result = subprocess.Popen(
+            ['ping', '-c', '2', "-n", "-W", "2", hostList[x]],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+        if result == 0:
+            logging.info('{} - {} is reachable'.format(hostList[x],descriptionList[x]))
+            if args.dns:
+                try:
+                    hostname = socket.gethostbyaddr(hostList[x])[0]
+                    logging.info('hostname = {}'.format(hostname))
+                except socket.herror:
+                    logging.critical('Reverse DNS lookup failed!')
+            time.sleep(1)
+        else:
+            logging.critical('---> {} - {} is unreachable'.format(hostList[x],descriptionList[x]))
+            if args.dns:
+                try:
+                    hostname = socket.gethostbyaddr(hostList[x])[0]
+                    logging.info('hostname = {}'.format(hostname))
+                except socket.herror:
+                    logging.critical('Reverse DNS lookup failed!')
+            time.sleep(1)
+>>>>>>> 49deaeeb72f94018ba8d4d60e647d65470960c6d
 
 if __name__ == '__main__':
     main()
