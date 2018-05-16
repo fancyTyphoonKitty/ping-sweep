@@ -28,6 +28,8 @@ def pingSweep(count,filename,dns,debug,sleep):
     elif debug:
         coloredlogs.install(level='DEBUG')
         logging.info('LOGGING IS SET TO DEBUG')
+    if dns:
+        logging.info('DNS reverse lookup option set')
     logging.debug('Iterating through hosts in {}, {} times.'.format(filename, count))
     while count > 0:
         try:
@@ -48,10 +50,9 @@ def pingSweep(count,filename,dns,debug,sleep):
                 if dns:
                     try:
                         hostname = socket.gethostbyaddr(hostList[x])[0]
-                        logging.info('hostname = {}'.format(hostname))
+                        logging.info('{} resolved to {}'.format(hostList[x], hostname))
                     except socket.herror:
-                        logging.debug('DNS lookup failed for {}'.format(hostname))
-                        pass
+                        logging.critical('DNS lookup failed for {}'.format(hostList[x]))
                 logging.info('Sleeping {} seconds'.format(sleep))
                 time.sleep(sleep)
             else:
@@ -59,10 +60,9 @@ def pingSweep(count,filename,dns,debug,sleep):
                 if dns:
                     try:
                         hostname = socket.gethostbyaddr(hostList[x])[0]
-                        logging.info('hostname = {}'.format(hostname))
+                        logging.info('{} resolved to {}'.format(hostList[x], hostname))
                     except socket.herror:
-                        logging.debug('DNS lookup failed for {}'.format(hostname))
-                        pass
+                        logging.critical('DNS lookup failed for {}'.format(hostList[x]))
                 logging.info('Sleeping {} seconds'.format(sleep))
                 time.sleep(sleep)
         count -= 1
