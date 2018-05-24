@@ -24,18 +24,11 @@ def get_ips(filename):
     return host_ips, host_descs
 
 
-def multi_ping(count, filename, lookup, debug, sleep, threads):
+def multi_ping( filename, lookup, debug, sleep, threads):
 
-    coloredlogs.install()
-    if not debug:
-        coloredlogs.install(level='INFO')
-        logging.warning('LOGGING IS SET TO INFO')
-    elif debug:
-        coloredlogs.install(level='DEBUG')
-        logging.info('LOGGING IS SET TO DEBUG')
     if lookup:
         logging.info('DNS reverse lookup option set')
-    logging.debug('Iterating through hosts in {}, {} times.'.format(filename, count))
+    logging.debug('Iterating through hosts in {}'.format(filename))
 
     # Read in host IPs and host descriptions from passed file
     try:
@@ -51,7 +44,7 @@ def multi_ping(count, filename, lookup, debug, sleep, threads):
 
     # start the thread pool
     for i in range(threads):
-        worker = Thread(target=thread_ping, args=(out_q, ips_q, count))
+        worker = Thread(target=thread_ping, args=(out_q, ips_q))
         worker.setDaemon(True)
         worker.start()
 
@@ -70,7 +63,7 @@ def multi_ping(count, filename, lookup, debug, sleep, threads):
         logging.info(msg)
 
 
-def thread_ping(out_q, q, c):
+def thread_ping(out_q, q):
     """
     Ping hosts in queue
     :return:
@@ -79,11 +72,10 @@ def thread_ping(out_q, q, c):
         # Get an ip address from IP queue
         ip = q.get()
         # ping
-        args = ['ping', '-c', '{}'.format(c), '-W', '1', str(ip)]
+        args = ['ping', '-c', '1', '-W', '1', str(ip)]
         p_ping = subprocess.Popen(args, shell=False, stdout=subprocess.PIPE)
         # Save ping stdout
         p_ping_out = p_ping.communicate()[0]
-
         if p_ping.wait() == 0:
             search = re.search(b'(.*)/(.*)/(.*)/(.*) ms',
                                p_ping_out, re.M | re.I)
@@ -97,12 +89,6 @@ def thread_ping(out_q, q, c):
 def ping_sweep(count, filename, lookup, debug, sleep):
 
     coloredlogs.install()
-    if not debug:
-        coloredlogs.install(level='INFO')
-        logging.warning('LOGGING IS SET TO INFO')
-    elif debug:
-        coloredlogs.install(level='DEBUG')
-        logging.info('LOGGING IS SET TO DEBUG')
     if lookup:
         logging.info('DNS reverse lookup option set')
     logging.debug('Iterating through hosts in {}, {} times.'.format(filename, count))
@@ -167,10 +153,22 @@ def main():
     parser.add_argument('-t', '--threads', type=int, default=1, required=False,
                         help='set an integer value for the number of threads you would like')
     args = parser.parse_args()
+
+    coloredlogs.install()
+    if not args.debug:
+        coloredlogs.install(level='INFO')
+        logging.warning('LOGGING IS SET TO INFO')
+    elif args.debug:
+        coloredlogs.install(level='DEBUG')
+        logging.info('LOGGING IS SET TO DEBUG')
+
     if args.sleep > 1:
         ping_sweep(args.count, args.filename, args.lookup, args.debug, args.sleep)
     elif args.sleep == 1:
-        multi_ping(args.count, args.filename, args.lookup, args.debug, args.sleep, args.threads)
+        iterations = int(args.count)
+        while iterations > 0:
+            multi_ping(args.filename, args.lookup, args.debug, args.sleep, args.threads)
+            iterations -= 1
 
 
 if __name__ == '__main__':
